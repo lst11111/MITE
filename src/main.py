@@ -222,13 +222,8 @@ def test(hypernum, model, test_loaders, epoch, device, tokenizer, output_file, d
                 # 投票集成：对每个样本进行投票（从不同数据集的预测结果中选择最常见的标签）
                 final_preds = []
                 for i in range(len(batch_labels)):  # 遍历每个样本
-                    # 对当前样本，收集所有数据集的预测，按照batch中的每条数据为最小单位进行处理
                     unique_votes = list(set([batch_predictions[j][i] for j in range(len(dataset_names))]))
-
-                    ##在这里对所有的votes的格式进行统一操作
-                    ##待做！！！
                     unique_format = process_and_convert_entity_list(unique_votes)
-                    # 执行多数投票：选择出现次数最多的预测结果
                     majority_vote = apply_majority_voting_rule(unique_format)
                     final_preds.append(majority_vote)
 
@@ -384,11 +379,8 @@ def test(hypernum, model, test_loader, epoch, device, tokenizer, output_file, da
 if __name__ == '__main__':
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     hypernum = Hypernum.from_yaml("./config/config.yaml")
-    ##修改全局的tokenizer
-    tokenizer_new = AutoTokenizer.from_pretrained(hypernum.model_path)
-    # NEW_ENTITY_TOKENS = ["<bc5cdr_disease>"]
-    # tokenizer_new.add_tokens(NEW_ENTITY_TOKENS)
-    train_loader, dev_loss_loaders, dev_f1_loaders , test_loaders = create_dataloader(hypernum,tokenizer=tokenizer_new)
+    tokenizer = AutoTokenizer.from_pretrained(hypernum.model_path)
+    train_loader, dev_loss_loaders, dev_f1_loaders , test_loaders = create_dataloader(hypernum,tokenizer=tokenizer)
 
     #加载预训练模型
     model = AutoModelForCausalLM.from_pretrained(
@@ -452,7 +444,7 @@ if __name__ == '__main__':
         dataset_count = 0
         total_loss = 0
 
-        for dataset_name in dev_loss_loaders.keys():  # 使用dev_loss_loaders的key
+        for dataset_name in dev_loss_loaders.keys(): 
             output_file = hypernum.dev_pre_path.format(dataset=dataset_name)
             answer_output = hypernum.dev_clean_path.format(dataset=dataset_name)
             
@@ -468,7 +460,7 @@ if __name__ == '__main__':
                 dev_f1_loader,    # 传入dev_f1_loader
                 epoch,
                 device,
-                tokenizer_new,  # 使用全局的tokenizer，而不是dataset的tokenizer
+                tokenizer,  
                 output_file,
                 dataset_name,
                 answer_output
@@ -536,7 +528,7 @@ if __name__ == '__main__':
             test_loaders_to_vote,   # 三个数据集一起推理
             -1,
             device,
-            tokenizer_new,
+            tokenizer,
             output_file,
             datasets_to_vote,       # 三个数据集名称
             answer_output
