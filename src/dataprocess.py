@@ -41,7 +41,7 @@ class NERDataset(Dataset):
             labels_text = self.assistant_format.format(content = labels)
             systems.append(systems_text)##带有模板的指令
             texts.append(input_text)##带有模板的问题
-            outputs.append(labels_text)##带有模板的回答 每个模板都是i am start and i am end 
+            outputs.append(labels_text)##带有模板的回答 
        
         
         #如果是训练的话，gold_label=input
@@ -88,7 +88,7 @@ class NERDataset(Dataset):
                 labels
             )
             
-        else:##在推理的时候，不需要对真实标签进行编码，直接传回来真实标签的字符串形式就行了，这块还需要再改一改
+        else:##在推理的时候，不需要对真实标签进行编码
             inputs = [x + " " + y for x, y in zip(systems, texts)]
             if self.template_name == "qwen":
                 output = [item[:-14] for item in outputs]##去除gold_label中带有模板的内容
